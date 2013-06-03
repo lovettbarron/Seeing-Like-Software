@@ -18,8 +18,13 @@ public:
     
     Light(ofVec3f _position, int _id);
     ~Light();
+    
     void update();
     void draw();
+    void debug();
+    int getStrength();
+    void setActive(bool _active);
+    
     void setLocation(ofVec3f _position);
     ofVec3f getLocation();
     

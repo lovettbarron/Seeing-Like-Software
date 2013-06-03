@@ -28,6 +28,32 @@ void Light::draw() {
         ofSetColor(0);
     ofDrawBitmapString("Light" + ofToString(lightId),0,12);
     ofDrawBitmapString("x" + ofToString(loc.x) + " y" + ofToString(loc.z),0,0);
+    ofScale(10,10,10);
     ofSphere(1);
     ofPopMatrix();
+}
+
+void Light::update() {
+    
+}
+
+void Light::debug() {
+    
+}
+
+void Light::setActive(bool _active) {
+    active = _active;
+}
+
+void Light::setLocation(ofVec3f _position) {
+    loc = _position;
+}
+
+ofVec3f Light::getLocation() {
+    return loc;
+}
+
+int Light::getStrength() {
+    if(active) return 1;
+    else return 0;
 }
