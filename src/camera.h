@@ -26,6 +26,8 @@ public:
     void setBackground();
     
     vector<ofPoint> getPeople();
+    void drawPerson(ofPoint pos);
+    void drawPeople();
     
     ofxAutoControlPanel * panel;
     vector<Light*> lights;

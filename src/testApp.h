@@ -14,7 +14,7 @@ class testApp : public ofBaseApp{
         void exit();
 		void keyPressed  (int key);
         void updateSettings();
-        void drawPerson(ofPoint pos, ofVec3f dir);
+//        void drawPerson(ofPoint pos, ofVec3f dir);
 
         vector <Light*> lights;
 

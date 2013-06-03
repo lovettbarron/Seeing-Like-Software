@@ -237,6 +237,7 @@
 		83A1C2DE175BF883008F23C8 /* ofxKinect.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ofxKinect.h; sourceTree = "<group>"; };
 		83A1C2ED175C30D4008F23C8 /* camera.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = camera.cpp; sourceTree = "<group>"; };
 		83A1C2EE175C30D4008F23C8 /* camera.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = camera.h; sourceTree = "<group>"; };
+		83A1C2F0175C58BF008F23C8 /* seeing-like-software.ino */ = {isa = PBXFileReference; explicitFileType = sourcecode.c; fileEncoding = 4; name = "seeing-like-software.ino"; path = "bin/arduino/seeing-like-software.ino"; sourceTree = "<group>"; };
 		8418a7c33161884a3eca2eef867774af /* ofxCvColorImage.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = ofxCvColorImage.h; path = ../../openFrameworks/addons/ofxOpenCv/src/ofxCvColorImage.h; sourceTree = SOURCE_ROOT; };
 		866127259395c169e08b914313cf2be5 /* logger.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = logger.h; path = ../../openFrameworks/addons/ofxOpenCv/libs/opencv/include/opencv2/flann/logger.h; sourceTree = SOURCE_ROOT; };
 		8697543d8170c4490bcf350c94ec76db /* guiTypeButtonSlider.h */ = {isa = PBXFileReference; explicitFileType = sourcecode.c.h; fileEncoding = 30; name = guiTypeButtonSlider.h; path = ../../openFrameworks/addons/ofxControlPanel/src/guiTypeButtonSlider.h; sourceTree = SOURCE_ROOT; };
@@ -821,6 +822,7 @@
 			isa = PBXGroup;
 			children = (
 				E4B6FCAD0C3E899E008CF71C /* openFrameworks-Info.plist */,
+				83A1C2F0175C58BF008F23C8 /* seeing-like-software.ino */,
 				E4EB6923138AFD0F00A09F29 /* Project.xcconfig */,
 				E4B69E1C0A3A1BDC003C02F2 /* src */,
 				E4EEC9E9138DF44700A80321 /* openFrameworks */,

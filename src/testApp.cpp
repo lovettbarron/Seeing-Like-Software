@@ -14,15 +14,12 @@ void testApp::setup(){
     for(int i=0;i<numberOfLights;i++) {
         lights.push_back( new Light(
                                     ofVec3f(
-                                            ofRandom(0,room.x),
-                                            room.y,
-                                            ofRandom(0,room.z)
+                                            room.x/2,
+                                            room.y/2,
+                                            i*(room.z/numberOfLights)
                                         ), i ) );
     }
     
-    //    for(int i=0;i<10;i++) {
-    //        people.push_back( new People( ofVec3f(ofRandom(0,room.x),0,ofRandom(0,room.z)),i));
-    //    }
     setupGUI();
     cam = new Camera(&panel, lights);
     
@@ -57,11 +54,7 @@ void testApp::draw(){
         lights[i]->draw();
     }
 
-    vector<ofPoint> ppl;
-    ppl = cam->getPeople();
-    for(int i=0;i<ppl.size();i++) {
-        drawPerson(ppl[i], ofVec3f());
-    }
+    cam->drawPeople();
     
     ofPushMatrix();
     ofSetColor(100,100,100);
@@ -80,15 +73,6 @@ void testApp::draw(){
         for(int i=0;i<lights.size();i++) {
             lights[i]->debug();
         }
-        
-//        for(int i = 0; i < contourFinder.size(); i++) {
-//            ofPoint center = toOf(contourFinder.getCenter(i));
-//            float depth;
-//            if(kinect.isConnected())
-//                depth = kinect.getDistanceAt(center)*.1;
-//            else depth = 1.0;
-//        }
-        //drawCamera();
     }
     
     cam->draw();
@@ -134,18 +118,6 @@ void testApp::keyPressed(int key){
 ///////////////////
 
 
-void testApp::drawPerson(ofPoint pos, ofVec3f dir) {
-    ofPushMatrix();
-    ofTranslate(pos.x,30,pos.y);
-    ofSetColor(255);
-    ofDrawBitmapString("x" + ofToString(pos.x) + " y" + ofToString(pos.y),0,0);
-    ofSetColor(127);
-    ofSphere(0,60,0,20);
-    ofScale(20,60,10);
-    ofBox(1);
-    ofLine(0,0,dir.x,dir.y);
-    ofPopMatrix();
-}
 
 ///////////////////
 ///////////////////
@@ -198,7 +170,7 @@ void testApp::setupArduino() {
     //    New proto
     // Lights in ID order, CSV new line delin
     serial.listDevices();
-	serial.setup(9,9600);
+	serial.setup(7,115200);
 
     
 }
@@ -219,8 +191,7 @@ void testApp::writeArduino() {
             serial.writeByte(',');
         }
         buffer += "\n";
-        serial.writeByte('a');
-        //        serial.writeBytes((unsigned char*) buffer.c_str(),buffer.size());
+        serial.writeByte('a');      
         ofLog() << buffer;
     }
 }

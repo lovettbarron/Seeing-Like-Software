@@ -147,17 +147,8 @@ void Camera::update() {
                         float distance = 0;
                         for( int i=0;i<contourFinder.size();i++) {
                             ofPoint center = toOf(contourFinder.getCenter(i));
-                            float depth, multi;
-                            if(kinect.isConnected()) {
-                                depth = kinect.getDistanceAt(center);
-                                multi = 1 * pow((float)depth,1.1f);
-                            } else {
-                                multi = 1 * pow((float)center.y,1.1f);
-                            }
-                            
-                           // distance += lights[j]->getLocation().squareDistance(ofVec3f(multi, 30, center.x)) * .001;
                             ofVec3f cur = lights[j]->getLocation();
-                            if(cur.squareDistance(ofVec3f(multi, 30, center.x) *.00001) < panel->getValueI("lightThresh") )
+                            if(cur.squareDistance(center) * .001 < panel->getValueI("lightThresh") )
                                 lights[j]->setActive(true);
                             else
                                 lights[j]->setActive(false);
@@ -206,18 +197,37 @@ void Camera::setBackground() {
 
 vector<ofPoint> Camera::getPeople() {
     vector<ofPoint> ppl;
+//    for( int i=0;i<contourFinder.size();i++) {
+//        ofPoint center = toOf(contourFinder.getCenter(i));
+//        ppl.push_back(ofPoint(multi,  center.x));
+//    }
+    return ppl;
+}
+
+void Camera::drawPeople() {
     for( int i=0;i<contourFinder.size();i++) {
         ofPoint center = toOf(contourFinder.getCenter(i));
-       float depth, multi;
-       if(kinect.isConnected()) {
-           depth = kinect.getDistanceAt(center)*.1;
-           multi = 1 * pow((float)depth,1.1f);
-       } else {
-           multi = 1 * pow((float)center.y,1.1f);
-       }
-        ppl.push_back(ofPoint(multi,  center.x));
+        drawPerson(center);
     }
-    return ppl;
+}
+
+void Camera::drawPerson(ofPoint _pos) {
+    
+    float depth, multi;
+    depth = kinect.getDistanceAt(_pos)*.1;
+    multi = 1 * pow((float)depth,1.1f);
+    
+    ofPoint pos = ofPoint(multi, _pos.x);
+    
+    ofPushMatrix();
+    ofTranslate(pos.x,30,pos.y);
+    ofSetColor(255);
+    ofDrawBitmapString("x" + ofToString(pos.x) + " y" + ofToString(pos.y),0,0);
+    ofSetColor(127);
+    ofSphere(0,60,0,20);
+    ofScale(20,60,10);
+    ofBox(1);
+    ofPopMatrix();
 }
 
 void Camera::fillHoles(cv::Mat _mat) {
