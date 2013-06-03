@@ -62,6 +62,8 @@ void Camera::setup() {
 
 void Camera::draw() {
     ofPushMatrix();
+    
+    // Draw the depth buffer
     glDisable(GL_DEPTH_TEST);
     ofTranslate(ofGetWidth()-(kinect.getWidth()/2), ofGetHeight()-(kinect.getHeight()/2));
     ofScale(.5,.5);
@@ -70,12 +72,14 @@ void Camera::draw() {
     if(!kinect.isConnected()) cam.draw(0, 0);
     else kDepth.draw(0,0);
     
-    //        ofImage debug = toOf(kDepthMat);
+    // use ofxCountour draw
     contourFinder.draw();
     
+    // Draw the individual polylines
     for(int i = 0; i < contourFinder.size(); i++) {
         ofPoint center = toOf(contourFinder.getCenter(i));
         
+        // Draw depth
         float depth;
         if(kinect.isConnected())
             depth = kinect.getDistanceAt(center);
@@ -84,16 +88,18 @@ void Camera::draw() {
         contourFinder.getPolyline(i).draw();
         ofPushMatrix();
         ofTranslate(center.x, center.y);
-        int label = contourFinder.getLabel(i);
-        ofDrawBitmapString(ofToString(label) + ":" + ofToString(depth), 0, 12);
+        
+        // Draw depth IDed in center
+        ofDrawBitmapString(ofToString(depth), 0, 12);
+        
+        // Draws direction of poly movement
         ofVec2f velocity = toOf(contourFinder.getVelocity(i));
         ofScale(5, 5);
         ofLine(0, 0, velocity.x, velocity.y);
         ofPopMatrix();
     }
     glDisable(GL_DEPTH_TEST);
-    //    thresh.draw(thresh.width, 0, 2, 256,192);
-    ofPopMatrix(); // For panel
+    ofPopMatrix();
 }
 
 void Camera::update() {

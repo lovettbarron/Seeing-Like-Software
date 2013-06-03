@@ -47,29 +47,23 @@ void setupSerial() {
 }
 
 void loop() {
-    if (Serial.available() > 0) {
+    if (Serial.available() > NUMLIGHTS) {
         // read the oldest byte in the serial buffer:
-        inByte = Serial.read();
-        parseSerial(inByte);
-    }
-    
-    for( int i=0;i<NUMLIGHTS;i++) {
-        if(Lights[i].pwr != 0)
-            digitalWrite(Lights[i].pin, HIGH);
-        else
-            digitalWrite(Lights[i].pin, LOW);
+        for( int i=0;i<NUMLIGHTS;i++) {
+            Lights[i].pwr = Serial.read();
+            if(Lights[i].pwr != 0)
+                digitalWrite(Lights[i].pin, HIGH);
+            else
+                digitalWrite(Lights[i].pin, LOW);
         }
-
+        if(Serial.read() == 'a') Serial.write('a');
+       // parseSerial(inByte);
+    }
 }
 
 void parseSerial( unsigned char buffer) {
     connected = true;
-    
-    // Moves pointer to next light
-    if (buffer == ',') {
-        curLight++;
-    } else
-    
+
     // Last light
     if (buffer == '\n') {
         curLight = 0;
@@ -78,10 +72,6 @@ void parseSerial( unsigned char buffer) {
     
     if (buffer == 'e') {
         connected = false;
-    }
-    
-    else {
-        Lights[curLight].pwr = buffer;
     }
 }
 

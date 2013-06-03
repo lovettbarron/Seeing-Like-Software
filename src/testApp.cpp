@@ -113,10 +113,6 @@ void testApp::keyPressed(int key){
     }
 }
 
-///////////////////
-///////////////////
-///////////////////
-
 
 
 ///////////////////
@@ -181,17 +177,15 @@ void testApp::writeArduino() {
         buffer = "";
         for(int l = 0; l<lights.size();l++) {
             lights[l]->update();
-            
             serial.writeByte((unsigned char)lights[l]->getStrength());
-            
             buffer += ofToString(lights[l]->getStrength());
             
-            if(l!=lights.size()-1) buffer += ",";
+           // if(l!=lights.size()-1) buffer += ",";
             
-            serial.writeByte(',');
+         //   serial.writeByte(',');
         }
         buffer += "\n";
-        serial.writeByte('a');      
+        serial.writeByte('a');
         ofLog() << buffer;
     }
 }
