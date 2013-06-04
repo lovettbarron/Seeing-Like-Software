@@ -4,25 +4,25 @@
 //--------------------------------------------------------------
 void testApp::setup(){
     ofSetVerticalSync(true);
-    //    ofEnableLighting();
     
     worldCam.disableMouseInput();
     
-    numberOfLights =8;
+    numberOfLights = 8;
     room = ofVec3f(1000,400,500);
     
     for(int i=0;i<numberOfLights;i++) {
-        lights.push_back( new Light(
-                                    ofVec3f(
-                                            room.x/2,
-                                            room.y/2,
-                                            i*(room.z/numberOfLights)
-                                        ), i ) );
-    }
+        lights.push_back(
+             new Light(
+                ofVec3f(
+                        room.x/2,
+                        room.y/2,
+                        i*(room.z/numberOfLights)
+                    ), i ) );
+        }
     
     setupGUI();
-    cam = new Camera(&panel, lights);
     
+    cam = new Camera(&panel, lights);
     
     setupArduino();
 }
@@ -30,11 +30,13 @@ void testApp::setup(){
 //--------------------------------------------------------------
 void testApp::update(){
     cam->update();
+    
+    writeArduino();
+    updateSettings();
+    
     worldCam.setTarget(ofVec3f(room.x/2,room.y/2,room.z/2));
     worldCam.setPosition(room.x, room.y, room.z);
     worldCam.setDistance(panel.getValueF("cameraDistance"));
-    writeArduino();
-    updateSettings();
 }
 
 //--------------------------------------------------------------
@@ -45,6 +47,7 @@ void testApp::draw(){
     
 	worldCam.begin();
     
+    // Rotates around the world
     if(rotate)
         ofRotateY(ofRadToDeg(  ofGetElapsedTimeMillis()*.0001 ));
     
@@ -56,6 +59,7 @@ void testApp::draw(){
 
     cam->drawPeople();
     
+    // This draws out the room
     ofPushMatrix();
     ofSetColor(100,100,100);
     ofTranslate(room.x/2,0,room.z/2);
@@ -66,10 +70,9 @@ void testApp::draw(){
     worldCam.end();
     
     
-    
+    // This doesn't do anything in this version.
     if(debug) {
         ofSetHexColor(0x123456);
-        
         for(int i=0;i<lights.size();i++) {
             lights[i]->debug();
         }
@@ -88,7 +91,6 @@ void testApp::updateSettings(){
         float y = panel.getValueF("l" + ofToString(i) + "y");
         float z = panel.getValueF("l" + ofToString(i) + "z");
         lights[i]->setLocation(ofVec3f(x*room.x,y*room.y,z*room.z));
-//        if(sliderControl) lights[i]->setStrength(pwr);
     }
 }
 
@@ -126,16 +128,7 @@ void testApp::setupGUI() {
     panel.addSlider("cameraDistance",700,0,1000,false);
     panel.addSlider("TimeBetweenUpdate", 1000, 0,5000,true);
     panel.addSlider("lightThresh",100,0,1000,true);
-    
-    for( int i=0;i<numberOfLights;i++) {
-        panel.addPanel("Light" + ofToString(i));    void setLocation(ofVec3f _position);
-        panel.addLabel("Light" + ofToString(i) );
-        panel.addSlider("l" + ofToString(i) + "pwr", 1., 0., 1., false);
-        panel.addSlider("l" + ofToString(i) + "x", lights[i]->getLocation().x / room.x, 0., 1., false);
-        panel.addSlider("l" + ofToString(i) + "y", lights[i]->getLocation().y / room.y, 0., 1., false);
-        panel.addSlider("l" + ofToString(i) + "z", lights[i]->getLocation().z / room.z, 0., 1., false);
-    }
-    
+        
     panel.addPanel("Tracking Bits");
     panel.addLabel("Image Processing");
     panel.addSlider("cvBlur",10,0,100,true);
@@ -149,40 +142,42 @@ void testApp::setupGUI() {
     panel.addToggle("resetBg", false);
     panel.addSlider("OverlapDistance", 500, 0,1000,true);
     
-    panel.addSlider("idScale",.3,0,1.,false);
-    panel.addSlider("idPosx",-500,-700,700,true);
-    panel.addSlider("idPosy",-500,-700,700,true);
-    
-    panel.addPanel("Kinect");
-    panel.addSlider("angle", 0, -40, 40, true);
+    for( int i=0;i<numberOfLights;i++) {
+        panel.addPanel("Light" + ofToString(i));    void setLocation(ofVec3f _position);
+        panel.addLabel("Light" + ofToString(i) );
+        panel.addSlider("l" + ofToString(i) + "pwr", 1., 0., 1., false);
+        panel.addSlider("l" + ofToString(i) + "x", lights[i]->getLocation().x / room.x, 0., 1., false);
+        panel.addSlider("l" + ofToString(i) + "y", lights[i]->getLocation().y / room.y, 0., 1., false);
+        panel.addSlider("l" + ofToString(i) + "z", lights[i]->getLocation().z / room.z, 0., 1., false);
+    }
 }
 
 ///////////////////
 ///////////////////
 ///////////////////
 void testApp::setupArduino() {
-    
-    
-    //    New proto
-    // Lights in ID order, CSV new line delin
     serial.listDevices();
 	serial.setup(7,115200);
-
-    
 }
 
 void testApp::writeArduino() {
+    // I control how often I write to the arduino, was having problems
+    // with too much data being pumped through. This lets me control
+    // how often the updates happen via the control panel.
     if(limitBuffer <= ofGetElapsedTimeMillis()) {
         limitBuffer = ofGetElapsedTimeMillis() + panel.getValueI("TimeBetweenUpdate");
+        
+        // The buffer variable is NOT used to send info, but is for
+        // debugging purposes.
         buffer = "";
+        
+        // Write out ALL the lights, and the number of lights needs to match
+        // on the arudino side too. This could be a lot smarter, but it's
+        // not. for thi ssimple prototype.
         for(int l = 0; l<lights.size();l++) {
             lights[l]->update();
             serial.writeByte((unsigned char)lights[l]->getStrength());
             buffer += ofToString(lights[l]->getStrength());
-            
-           // if(l!=lights.size()-1) buffer += ",";
-            
-         //   serial.writeByte(',');
         }
         buffer += "\n";
         serial.writeByte('a');

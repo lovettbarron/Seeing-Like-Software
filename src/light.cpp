@@ -37,6 +37,9 @@ void Light::update() {
     
 }
 
+// Previous installations have included a debug mode for more
+// complex lighting, basically a display on the side that communicates
+// the light state. See http://github.com/readywater/firesite for examples
 void Light::debug() {
     
 }
@@ -53,6 +56,8 @@ ofVec3f Light::getLocation() {
     return loc;
 }
 
+// Simply turns on and off, but can be set up to return
+// a greater range, hence returning an integer.
 int Light::getStrength() {
     if(active) return 1;
     else return 0;

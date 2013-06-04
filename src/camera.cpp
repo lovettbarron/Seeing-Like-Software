@@ -20,6 +20,7 @@ Camera::Camera(ofxAutoControlPanel * _panel, vector<Light*> _lights) {
 }
 
 Camera::~Camera() {
+    // Cleanup is good.
     kinect.close();
     kinect.clear();
 }
@@ -27,17 +28,18 @@ Camera::~Camera() {
 
 void Camera::setup() {
     kinect.setRegistration(true);
-    ofLog() << "Starting first kinect";
     kinect.init(false, false, true); // infrared=false, video=true, texture=true
     kinect.open(0);
     
+    // If there's no kinect, use webcam. Better for my mode of
+    // coding, i.e. parks, coffee shops, airplanes.
     if(!kinect.isConnected()) {
         cam.initGrabber(640, 480);
     }
     
-    thresh.allocate(640, 480, OF_IMAGE_GRAYSCALE);
-    kDepth.allocate(640, 480, OF_IMAGE_GRAYSCALE);
-    kDepthMat.create(480, 640, CV_8UC1);
+    thresh.allocate(640, 480, OF_IMAGE_GRAYSCALE); // Threshold image
+    kDepth.allocate(640, 480, OF_IMAGE_GRAYSCALE); // ofImage to render
+    kDepthMat.create(480, 640, CV_8UC1);           // cv::Mat for kDepth
     //threshMat.create(480, 640, CV_32F);
     imitate(threshMat, kDepthMat);
     imitate(avgMat, kDepthMat);
@@ -51,11 +53,14 @@ void Camera::setup() {
     background.setThresholdValue(panel->getValueI("backgroundThresh"));
     background.setLearningTime(panel->getValueI("learningTime"));
     
+    // Setup the contour finder
     contourFinder.setMinAreaRadius(panel->getValueI("minAreaRadius"));
     contourFinder.setMaxAreaRadius(panel->getValueI("maxAreaRadius"));
     contourFinder.setThreshold(panel->getValueI("maxThreshold"));
+    
     // wait for half a frame before forgetting something
     contourFinder.getTracker().setPersistence(15);
+    
     // an object can move up to 32 pixels per frame
     contourFinder.getTracker().setMaximumDistance(32);
     avgCounter = 0;
@@ -66,6 +71,8 @@ void Camera::draw() {
     
     // Draw the depth buffer
     glDisable(GL_DEPTH_TEST);
+
+    // This just sets up the image debug in the right place and scales it
     ofTranslate(ofGetWidth()-(kinect.getWidth()/2), ofGetHeight()-(kinect.getHeight()/2));
     ofScale(.5,.5);
     ofSetColor(255);
@@ -121,7 +128,7 @@ void Camera::update() {
         panel->setValueB("resetBg",false);
     }
     
-    // Update camera or kinect, flag as a new frame
+    // Update cam or kinect, flag as a new frame
     if(!kinect.isConnected()) {
         cam.update();
         if(cam.isFrameNew()) isNew = true;
@@ -156,19 +163,27 @@ void Camera::update() {
             avgMat += kDepthMat/3;
             // threshMat = ( (kDepthMat * .3) + (threshMat))/2 ; // Attempt at an adapting threshold...
             cv::absdiff(avgMat, threshMat, avgMat);
-            fillHoles(avgMat);
+            fillHoles(avgMat); // Reduce how often "fill hole" is used for speed
             contourFinder.findContours(avgMat);
-            toOf(avgMat,kDepth);
-            kDepth.update();
-            // brush = getContour(&contourFinder);
-            //               float distance;
+            toOf(avgMat,kDepth); // Online convert mat to ofImage when necessary
+            kDepth.update(); // Update the glTexture w/ cv::mat updated info
             
+            
+            // This is where we calculate whether a light is turned on or not.
             for(int j=0;j<lights.size();j++) {
                 float distance = 0;
+                // Check for contours, which we define is people.
                 for( int i=0;i<contourFinder.size();i++) {
                     ofPoint center = toOf(contourFinder.getCenter(i));
+                    float depth;
+                    if(kinect.isConnected())
+                        depth = kinect.getDistanceAt(center)*.1;
+                    else depth = 100;
+                    float multi = 1 * pow((float)depth,1.1f);
+                    
+                    ofVec3f personCoord = ofVec3f(center.x, multi, center.y);
                     ofVec3f cur = lights[j]->getLocation();
-                    if(cur.squareDistance(center) * .001 < panel->getValueI("lightThresh") )
+                    if(cur.squareDistance(personCoord) * .001 < panel->getValueI("lightThresh") )
                         lights[j]->setActive(true);
                     else
                         lights[j]->setActive(false);
@@ -234,12 +249,21 @@ void Camera::drawPeople() {
 
 void Camera::drawPerson(ofPoint _pos) {
     
+    
     float depth, multi;
     depth = kinect.getDistanceAt(_pos)*.1;
     multi = 1 * pow((float)depth,1.1f);
     
     ofPoint pos = ofPoint(multi, _pos.x);
     
+    // Personal sanity check...
+    ofPushMatrix();
+    ofTranslate(ofVec3f(_pos.y, 10, _pos.x));
+    ofSetColor(255,120,120);
+    ofSphere(10);
+    ofPopMatrix();
+    
+    // Actual people rendering
     ofPushMatrix();
     ofTranslate(pos.x,30,pos.y);
     ofSetColor(255);
