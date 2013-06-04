@@ -13,6 +13,7 @@ using namespace cv;
 using namespace ofxCv;
 
 Camera::Camera(ofxAutoControlPanel * _panel, vector<Light*> _lights) {
+    isNew = false;
     panel = _panel;
     lights = _lights;
     setup();
@@ -69,8 +70,9 @@ void Camera::draw() {
     ofScale(.5,.5);
     ofSetColor(255);
     ofSetLineWidth(1);
-    if(!kinect.isConnected()) cam.draw(0, 0);
-    else kDepth.draw(0,0);
+
+    // Drawing this will applay to both cam and kinect
+    kDepth.draw(0,0);
     
     // use ofxCountour draw
     contourFinder.draw();
@@ -119,56 +121,69 @@ void Camera::update() {
         panel->setValueB("resetBg",false);
     }
     
+    // Update camera or kinect, flag as a new frame
     if(!kinect.isConnected()) {
-        cam.update(); 
+        cam.update();
+        if(cam.isFrameNew()) isNew = true;
     } else {
         kinect.update();
-        if(kinect.isFrameNew()) {
-            if(avgCounter == 0) {
-                kDepthMat = toCv(kinect.getDepthPixelsRef());
-                blur(kDepthMat, panel->getValueI("cvBlur"));
-                avgMat = kDepthMat;
-                avgCounter++;
-            } else
-                if(avgCounter < 2) { // If averaging the frames
-                    kDepthMat = toCv(kinect.getDepthPixelsRef());
-                    blur(kDepthMat, panel->getValueI("cvBlur"));
-                    avgMat += kDepthMat/3;
-                    avgCounter++;
-                    
-                } else { // Act on the average
-                    kDepthMat = toCv(kinect.getDepthPixelsRef());
-                    blur(kDepthMat, panel->getValueI("cvBlur"));
-                    avgMat += kDepthMat/3;
-                    // threshMat = ( (kDepthMat * .3) + (threshMat))/2 ; // Attempt at an adapting threshold...
-                    cv::absdiff(avgMat, threshMat, avgMat);
-                    fillHoles(avgMat);
-                    contourFinder.findContours(avgMat);
-                    toOf(avgMat,kDepth);
-                    kDepth.update();
-                    // brush = getContour(&contourFinder);
-                    //               float distance;
-                    
-                    for(int j=0;j<lights.size();j++) {
-                        float distance = 0;
-                        for( int i=0;i<contourFinder.size();i++) {
-                            ofPoint center = toOf(contourFinder.getCenter(i));
-                            ofVec3f cur = lights[j]->getLocation();
-                            if(cur.squareDistance(center) * .001 < panel->getValueI("lightThresh") )
-                                lights[j]->setActive(true);
-                            else
-                                lights[j]->setActive(false);
-
-                        }
-                        // lights[j]->setTotalDist(distance);
-                    }
-                    
-                    avgCounter = 0; // This resets the frame averaging.
-                }
-        }
-        
-        
+        if(kinect.isFrameNew()) isNew = true;
     }
+    
+    // If we have a new frame with either the Kinect or Camera
+    if(isNew) {
+        if(!kinect.isConnected()) {
+//            kDepthMat = ;
+            Mat temp = toCv(cam.getPixelsRef());
+            convertColor(temp, kDepthMat, CV_RGB2GRAY); // Convert in place
+        }
+        else {
+         kDepthMat = toCv(kinect.getDepthPixelsRef());   
+        }
+        blur(kDepthMat, panel->getValueI("cvBlur"));
+        avgMat = kDepthMat;
+        
+        // Averaging across three frames
+        if(avgCounter == 0) {
+            avgCounter++;
+        }
+        else if(avgCounter < 2) { // If averaging the frames
+                avgMat += kDepthMat/3;
+                avgCounter++;
+                
+        }
+        else { // Act on the average
+            avgMat += kDepthMat/3;
+            // threshMat = ( (kDepthMat * .3) + (threshMat))/2 ; // Attempt at an adapting threshold...
+            cv::absdiff(avgMat, threshMat, avgMat);
+            fillHoles(avgMat);
+            contourFinder.findContours(avgMat);
+            toOf(avgMat,kDepth);
+            kDepth.update();
+            // brush = getContour(&contourFinder);
+            //               float distance;
+            
+            for(int j=0;j<lights.size();j++) {
+                float distance = 0;
+                for( int i=0;i<contourFinder.size();i++) {
+                    ofPoint center = toOf(contourFinder.getCenter(i));
+                    ofVec3f cur = lights[j]->getLocation();
+                    if(cur.squareDistance(center) * .001 < panel->getValueI("lightThresh") )
+                        lights[j]->setActive(true);
+                    else
+                        lights[j]->setActive(false);
+
+                }
+                // lights[j]->setTotalDist(distance);
+            }
+            
+            avgCounter = 0; // This resets the frame averaging.
+        }
+        isNew = false;
+    }
+        
+        
+    
 }
 
 

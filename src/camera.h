@@ -47,6 +47,7 @@ public:
     int avgCounter;
     ofxCv::RunningBackground background;
     ofxCv::ContourFinder contourFinder;
+    bool isNew;
 };
 
 #endif /* defined(__seeing_like_software__camera__) */
