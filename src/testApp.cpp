@@ -14,9 +14,9 @@ void testApp::setup(){
         lights.push_back(
              new Light(
                 ofVec3f(
-                        room.x/2,
+                        i*((room.x/2)/numberOfLights),
                         room.y/2,
-                        i*(room.z/numberOfLights)
+                        room.z/2
                     ), i ) );
         }
     

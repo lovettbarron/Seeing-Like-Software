@@ -165,20 +165,23 @@ void Camera::update() {
         else { // Act on the average
             avgMat += kDepthMat/3;
             // threshMat = ( (kDepthMat * .3) + (threshMat))/2 ; // Attempt at an adapting threshold...
-            cv::absdiff(avgMat, prevFrame, threshMat);
             
-            copy(avgMat, prevFrame);
+            fillHoles(avgMat); // Reduce how often "fill hole" is used for speed
+            copy(avgMat, threshMat);
+//            cv::absdiff(avgMat, prevFrame, threshMat);
             
-            fillHoles(threshMat); // Reduce how often "fill hole" is used for speed
+//            copy(avgMat, prevFrame);
+            
             contourFinder.findContours(threshMat);
             toOf(threshMat,kDepth); // Online convert mat to ofImage when necessary
             kDepth.update(); // Update the glTexture w/ cv::mat updated info
             
-            
+
             // This is where we calculate whether a light is turned on or not.
             for(int j=0;j<lights.size();j++) {
                 float distance = 0;
                 // Check for contours, which we define is people.
+                if(contourFinder.size() > 0) {
                 for( int i=0;i<contourFinder.size();i++) {
                     ofPoint center = toOf(contourFinder.getCenter(i));
                     float depth;
@@ -195,6 +198,12 @@ void Camera::update() {
                     else
                         lights[j]->setActive(false);
 
+                }
+                }
+                else {
+                        lights[j]->setActive(false);
+                    
+                    
                 }
                 // lights[j]->setTotalDist(distance);
             }
