@@ -8,6 +8,7 @@
 
 #include "light.h"
 
+
 Light::Light(ofVec3f _position, int _id) {
     loc = _position;
     lightId = _id;

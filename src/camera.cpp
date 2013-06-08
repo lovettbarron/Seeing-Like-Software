@@ -37,12 +37,15 @@ void Camera::setup() {
         cam.initGrabber(640, 480);
     }
     
-    thresh.allocate(640, 480, OF_IMAGE_GRAYSCALE); // Threshold image
+   // thresh.allocate(640, 480, OF_IMAGE_GRAYSCALE); // Threshold image
     kDepth.allocate(640, 480, OF_IMAGE_GRAYSCALE); // ofImage to render
     kDepthMat.create(480, 640, CV_8UC1);           // cv::Mat for kDepth
     //threshMat.create(480, 640, CV_32F);
-    imitate(threshMat, kDepthMat);
+//    imitate(threshMat, kDepthMat);
     imitate(avgMat, kDepthMat);
+    imitate(kDepthMat,avgMat);
+    imitate(prevFrame,avgMat);
+    imitate(threshMat,avgMat);
     //    imitate(kDepth, kDepthMat);
     //    imitate(thresh, threshMat);
     
@@ -162,10 +165,13 @@ void Camera::update() {
         else { // Act on the average
             avgMat += kDepthMat/3;
             // threshMat = ( (kDepthMat * .3) + (threshMat))/2 ; // Attempt at an adapting threshold...
-            cv::absdiff(avgMat, threshMat, avgMat);
-            fillHoles(avgMat); // Reduce how often "fill hole" is used for speed
-            contourFinder.findContours(avgMat);
-            toOf(avgMat,kDepth); // Online convert mat to ofImage when necessary
+            cv::absdiff(avgMat, prevFrame, threshMat);
+            
+            copy(avgMat, prevFrame);
+            
+            fillHoles(threshMat); // Reduce how often "fill hole" is used for speed
+            contourFinder.findContours(threshMat);
+            toOf(threshMat,kDepth); // Online convert mat to ofImage when necessary
             kDepth.update(); // Update the glTexture w/ cv::mat updated info
             
             
@@ -182,6 +188,7 @@ void Camera::update() {
                     float multi = 1 * pow((float)depth,1.1f);
                     
                     ofVec3f personCoord = ofVec3f(center.x, multi, center.y);
+                    
                     ofVec3f cur = lights[j]->getLocation();
                     if(cur.squareDistance(personCoord) * .001 < panel->getValueI("lightThresh") )
                         lights[j]->setActive(true);
@@ -191,7 +198,6 @@ void Camera::update() {
                 }
                 // lights[j]->setTotalDist(distance);
             }
-            
             avgCounter = 0; // This resets the frame averaging.
         }
         isNew = false;
@@ -226,6 +232,10 @@ void Camera::fillHoles(cv::Mat src, cv::Mat dst) {
     //   ofxCv::copy(depthf,dst);
 }
 
+void Camera::smoothDetected() {
+    
+}
+
 
 void Camera::setBackground() {
     ofxCv::copy(kDepthMat, threshMat);
@@ -258,7 +268,7 @@ void Camera::drawPerson(ofPoint _pos) {
     
     // Personal sanity check...
     ofPushMatrix();
-    ofTranslate(ofVec3f(_pos.y, 10, _pos.x));
+    ofTranslate(ofVec3f(_pos.x, 10, _pos.y));
     ofSetColor(255,120,120);
     ofSphere(10);
     ofPopMatrix();

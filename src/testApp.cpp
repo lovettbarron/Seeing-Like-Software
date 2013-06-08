@@ -78,6 +78,7 @@ void testApp::draw(){
         }
     }
     
+    // Draws the debug from the cam object
     cam->draw();
     
     glDisable(GL_ALPHA_TEST);
@@ -104,7 +105,6 @@ void testApp::keyPressed(int key){
         case 'd':
             debug = !debug;
             break;
-            
         case 'm':
 			if(worldCam.getMouseInputEnabled()) worldCam.disableMouseInput();
 			else worldCam.enableMouseInput();
@@ -142,6 +142,7 @@ void testApp::setupGUI() {
     panel.addToggle("resetBg", false);
     panel.addSlider("OverlapDistance", 500, 0,1000,true);
     
+    // Goes through all the lights to config
     for( int i=0;i<numberOfLights;i++) {
         panel.addPanel("Light" + ofToString(i));    void setLocation(ofVec3f _position);
         panel.addLabel("Light" + ofToString(i) );
@@ -180,6 +181,7 @@ void testApp::writeArduino() {
             buffer += ofToString(lights[l]->getStrength());
         }
         buffer += "\n";
+        // Writes an a to signal end of string
         serial.writeByte('a');
         ofLog() << buffer;
     }

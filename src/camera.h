@@ -35,14 +35,20 @@ public:
     // cv
     ofxKinect kinect;
     ofVideoGrabber cam;
+    
+    cv::KalmanFilter KF;
+    
     void fillHoles(cv::Mat src, cv::Mat dst);
     void fillHoles(cv::Mat _mat);
 
+    void smoothDetected();
+    
     ofImage thresh;
     ofImage bgThresh;
     ofImage kDepth;
     cv::Mat kDepthMat;
     cv::Mat threshMat;
+    cv::Mat prevFrame;
     cv::Mat avgMat;
     int avgCounter;
     ofxCv::RunningBackground background;
